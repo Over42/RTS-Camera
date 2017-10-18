@@ -26,11 +26,14 @@ namespace RtsCam
 
         #endregion
 
-        private Transform m_Transform;  //camera tranform
-        public bool useFixedUpdate = false;  //use FixedUpdate() or Update()
+        private Transform m_Transform; //camera tranform
+        private Camera m_Camera; //camera for 2d zoom 
+        
+        public bool useFixedUpdate = false; //use FixedUpdate() or Update()        
 
         #region Movement
-
+        
+        public bool is2d = false;
         public float keyboardMovementSpeed = 5f; //speed with keyboard movement
         public float screenEdgeMovementSpeed = 3f; //spee with screen edge movement
         public float followingSpeed = 5f; //speed when following a target
@@ -165,6 +168,7 @@ namespace RtsCam
         private void Start()
         {
             m_Transform = transform;
+            m_Camera = GetComponent<Camera>();
         }
 
         private void Update()
@@ -205,8 +209,8 @@ namespace RtsCam
         {
             if (useKeyboardInput)
             {
-                Vector3 desiredMove = new Vector3(KeyboardInput.x, 0, KeyboardInput.y);
-
+                var desiredMove = is2d ? new Vector3(KeyboardInput.x,  KeyboardInput.y, 0) : new Vector3(KeyboardInput.x, 0, KeyboardInput.y);                
+                
                 desiredMove *= keyboardMovementSpeed;
                 desiredMove *= Time.deltaTime;
                 desiredMove = Quaternion.Euler(new Vector3(0f, transform.eulerAngles.y, 0f)) * desiredMove;
@@ -267,8 +271,16 @@ namespace RtsCam
             if(distanceToGround != targetHeight)
                 difference = targetHeight - distanceToGround;
 
-            m_Transform.position = Vector3.Lerp(m_Transform.position, 
-                new Vector3(m_Transform.position.x, targetHeight + difference, m_Transform.position.z), Time.deltaTime * heightDampening);
+            if (is2d)
+            {
+                m_Camera.orthographicSize = Mathf.Lerp(m_Camera.orthographicSize, targetHeight + difference, Time.deltaTime * heightDampening);
+            }
+            else
+            {
+                m_Transform.position = Vector3.Lerp(m_Transform.position,
+                    new Vector3(m_Transform.position.x, targetHeight + difference, m_Transform.position.z),
+                    Time.deltaTime * heightDampening);
+            }
         }
 
         /// <summary>
@@ -276,11 +288,13 @@ namespace RtsCam
         /// </summary>
         private void Rotation()
         {
-            if(useKeyboardRotation)
-                transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSped, Space.World);
+            var rotationVector = (is2d) ? Vector3.forward : Vector3.up;
+            if (useKeyboardRotation)           
+                transform.Rotate(rotationVector, RotationDirection * Time.deltaTime * rotationSped, Space.World);   
+                        
 
             if (useMouseRotation && Input.GetKey(mouseRotationKey))
-                m_Transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
+                m_Transform.Rotate(rotationVector, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
         }
 
         /// <summary>
@@ -328,11 +342,17 @@ namespace RtsCam
         /// <returns></returns>
         private float DistanceToGround()
         {
-            Ray ray = new Ray(m_Transform.position, Vector3.down);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, groundMask.value))
-                return (hit.point - m_Transform.position).magnitude;
-
+            if (is2d)
+            {
+                return m_Camera.orthographicSize;
+            }
+            else
+            {
+                Ray ray = new Ray(m_Transform.position, Vector3.down);
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit, groundMask.value))
+                    return (hit.point - m_Transform.position).magnitude;
+            }
             return 0f;
         }
 

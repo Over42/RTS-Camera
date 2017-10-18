@@ -36,6 +36,11 @@ namespace RtsCam
         {
             using (new HorizontalBlock())
             {
+                GUILayout.Label("Is 2D?");
+                camera.is2d = EditorGUILayout.Toggle(camera.is2d);
+            }
+            using (new HorizontalBlock())
+            {
                 GUILayout.Label("Use keyboard input: ", EditorStyles.boldLabel, GUILayout.Width(170f));
                 camera.useKeyboardInput = EditorGUILayout.Toggle( camera.useKeyboardInput);
             }
