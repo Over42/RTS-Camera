@@ -25,7 +25,7 @@ namespace RtsCam
         public override void OnInspectorGUI()
         {
             //base.OnInspectorGUI();
-            Undo.RecordObject(camera, "RTS_CAmera");
+            Undo.RecordObject(camera, "RTS_Camera");
             tabs.Draw();
             if (GUI.changed)
                 camera.lastTab = tabs.curMethodIndex;
@@ -54,7 +54,7 @@ namespace RtsCam
 
             if(camera.useScreenEdgeInput)
             {
-                EditorGUILayout.FloatField("Screen edge border size: ", camera.screenEdgeBorder);
+                camera.screenEdgeBorder = EditorGUILayout.FloatField("Screen edge border size: ", camera.screenEdgeBorder);
                 camera.screenEdgeMovementSpeed = EditorGUILayout.FloatField("Screen edge movement speed: ", camera.screenEdgeMovementSpeed);
             }
 
